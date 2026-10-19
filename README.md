@@ -96,7 +96,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j8
 ```
 
-JUCE is fetched automatically. `cmake --build build --target canopy_test` runs the headless test-suite (latch/held behaviour, sustain pedal, chord mode, MIDI learn, setlist, state round-trip, sample loading). Releases are built by [GitHub Actions](.github/workflows/release.yml) — the Mac DMG and Windows installer attached to each release come straight from that pipeline.
+JUCE is fetched automatically. `cmake --build build --target canopy_test` runs the headless test-suite (latch/held behaviour, sustain pedal, chord mode, MIDI learn, setlist, state round-trip, sample loading). The version comes from the `VERSION` file; releases are built by [GitHub Actions](.github/workflows/release.yml) — the Mac DMG and Windows installer attached to each release come straight from that pipeline.
 
 ```
 Source/

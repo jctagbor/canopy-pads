@@ -9,11 +9,21 @@ on:
 permissions:
   contents: write
 
-env:
-  VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '0.0.0-dev' }}
-
 jobs:
+  version:
+    name: Read VERSION
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: echo "version=$(cat VERSION | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+
   mac:
+    needs: version
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
     name: macOS (universal) - DMG with pkg installer
     runs-on: macos-14
     steps:
@@ -26,7 +36,7 @@ jobs:
         run: cmake --build build --config Release --target CanopyPads_AU CanopyPads_VST3 CanopyPads_Standalone -j4
 
       - name: Package (pkg + dmg)
-        run: bash packaging/make-mac-installer.sh "${VERSION#v}"
+        run: bash packaging/make-mac-installer.sh "$VERSION"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -34,6 +44,9 @@ jobs:
           path: dist/*.dmg
 
   windows:
+    needs: version
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
     name: Windows (x64) - Setup.exe
     runs-on: windows-latest
     steps:
@@ -48,7 +61,7 @@ jobs:
       - name: Package (Inno Setup)
         shell: pwsh
         run: |
-          $v = "${env:VERSION}".TrimStart("v")
+          $v = "${env:VERSION}"
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$v" packaging\windows-installer.iss
 
       - uses: actions/upload-artifact@v4
@@ -58,8 +71,8 @@ jobs:
 
   release:
     name: Publish GitHub Release
-    needs: [mac, windows]
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [version, mac, windows]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,7 +83,8 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Canopy Pads ${{ github.ref_name }}
+          tag_name: v${{ needs.version.outputs.version }}
+          name: Canopy Pads ${{ needs.version.outputs.version }}
           body_path: packaging/release-notes.md
           files: |
             dist/*.dmg
