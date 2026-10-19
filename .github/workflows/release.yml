@@ -1,0 +1,77 @@
+name: Build & Release
+
+on:
+  push:
+    tags: ["v*"]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '0.0.0-dev' }}
+
+jobs:
+  mac:
+    name: macOS (universal) - DMG with pkg installer
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+
+      - name: Build
+        run: cmake --build build --config Release --target CanopyPads_AU CanopyPads_VST3 CanopyPads_Standalone -j4
+
+      - name: Package (pkg + dmg)
+        run: bash packaging/make-mac-installer.sh "${VERSION#v}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: dist/*.dmg
+
+  windows:
+    name: Windows (x64) - Setup.exe
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        run: cmake --build build --config Release --target CanopyPads_VST3 CanopyPads_Standalone
+
+      - name: Package (Inno Setup)
+        shell: pwsh
+        run: |
+          $v = "${env:VERSION}".TrimStart("v")
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$v" packaging\windows-installer.iss
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*.exe
+
+  release:
+    name: Publish GitHub Release
+    needs: [mac, windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Canopy Pads ${{ github.ref_name }}
+          body_path: packaging/release-notes.md
+          files: |
+            dist/*.dmg
+            dist/*.exe

@@ -1,0 +1,9 @@
+build/
+dist/
+JUCE/
+pkgroot/
+pkgs/
+dmgroot/
+.DS_Store
+*.user
+.vs/
