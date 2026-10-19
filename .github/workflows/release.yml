@@ -16,7 +16,7 @@ jobs:
     outputs:
       version: ${{ steps.v.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: v
         run: echo "version=$(cat VERSION | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
 
@@ -27,13 +27,15 @@ jobs:
     name: macOS (universal) - DMG with pkg installer
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
 
       - name: Build
-        run: cmake --build build --config Release --target CanopyPads_AU CanopyPads_VST3 CanopyPads_Standalone -j4
+        run: |
+          set -o pipefail
+          cmake --build build --config Release --target CanopyPads_AU CanopyPads_VST3 CanopyPads_Standalone -j4 2>&1 | tee build.log || { grep -E "error" build.log | head -20 | sed 's/^/::error::/'; exit 1; }
 
       - name: Package (pkg + dmg)
         run: bash packaging/make-mac-installer.sh "$VERSION"
@@ -50,13 +52,24 @@ jobs:
     name: Windows (x64) - Setup.exe
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Configure
-        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+        shell: bash
+        run: |
+          set -o pipefail
+          cmake -B build -A x64 2>&1 | tee configure.log || { grep -iE "error|could not|not found" configure.log | head -20 | sed 's/^/::error::/'; exit 1; }
 
       - name: Build
-        run: cmake --build build --config Release --target CanopyPads_VST3 CanopyPads_Standalone
+        shell: bash
+        run: |
+          set -o pipefail
+          cmake --build build --config Release --target CanopyPads_VST3 CanopyPads_Standalone 2>&1 | tee build.log || { grep -E "error" build.log | head -20 | sed 's/^/::error::/'; exit 1; }
+
+      - name: Install Inno Setup if missing
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
 
       - name: Package (Inno Setup)
         shell: pwsh
@@ -75,7 +88,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/download-artifact@v4
         with:
           path: dist
