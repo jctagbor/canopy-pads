@@ -56,6 +56,10 @@ Open **Canopy Pads**. Click **Options** (top-left) to choose your audio interfac
 
 `A W S E D F T G Y H U J` = C through B &nbsp;·&nbsp; **Space** stop &nbsp;·&nbsp; **Esc** panic &nbsp;·&nbsp; **L** latch &nbsp;·&nbsp; **M** mode &nbsp;·&nbsp; **← →** setlist &nbsp;·&nbsp; **[ ]** swell
 
+## Pairs with Canopy Keys
+
+[**Canopy Keys**](https://github.com/jctagbor/canopy-keys) is the sibling app: a SoundFont (.sf2) instrument rack for everything *above* the pad octave — pianos, Rhodes, strings, choirs, bass — up to eight at once with splits and layers. It leaves the Pads drone zone silent, forwards it to Pads (virtual "Canopy Link" MIDI port in standalone), and when its setlist steps it sends **CC 111** (next) / **CC 110** (prev): MIDI-learn those on the MIDI & Keys tab here and one footswitch moves both.
+
 ## What's inside
 
 | | |
