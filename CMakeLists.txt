@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(CanopyPads VERSION 1.0.0 LANGUAGES C CXX)
+project(CanopyPads VERSION 1.0.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -27,6 +27,8 @@ else()
 endif()
 
 juce_add_plugin(CanopyPads
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/docs/icon/icon-1024.png"
+    ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/docs/icon/icon-256.png"
     COMPANY_NAME "Tagbor Audio"
     BUNDLE_ID "com.tagboraudio.canopypads"
     IS_SYNTH TRUE

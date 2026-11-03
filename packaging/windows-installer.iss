@@ -20,6 +20,8 @@ SolidCompression=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 WizardStyle=modern
+SetupIconFile=..\docs\icon\icon.ico
+UninstallDisplayIcon={app}\Canopy Pads.exe
 PrivilegesRequired=admin
 UninstallDisplayName=Canopy Pads
 
